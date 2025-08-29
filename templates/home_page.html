@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body, html {
+            font-family: Verdana;
+            overflow: hidden;
+        }
+        .main-content {
+            height: 100vh;
+            overflow: auto;
+        }
+        .prompt-container {
+            width: 100%;
+            margin: auto;
+        }
+        .prompt-title {
+            display: flex;
+            justify-content: center;
+        }
+        .prompt-input {
+            width: 600px; 
+            height: 30px;
+            font-size: 16px;
+            font-family: Verdana;
+            display: block;
+            margin: auto;
+        }
+        .information-container {
+            width: 1000px;
+            background-color: white;
+            border: 5px solid black;
+            margin: 10px auto;
+            border-radius: 10px;
+            padding-bottom: 10px;
+        }
+        .title-container {
+            width: 1000px;
+            height: 40px;
+            padding: 5px;
+            background-color: white;
+            border: 5px solid black;
+            background-color: rgb(227, 231, 233);
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            margin-top: -5px;
+            margin-left: -5px;
+            display: flex;             
+            align-items: center;       
+            justify-content: space-between;
+        }
+        .delete {
+            cursor: pointer;
+            font-size: 20px;
+            background: none;
+            border: none;
+            color: rgb(128, 0, 0);
+        }
+        .information-container, .title-container {
+            box-sizing: border-box;
+        }
+        .stock-graph {
+            width: 300px;
+            height: 200px;
+            background-color: #f0f0f0;
+            padding: 0px;
+            margin: 10px;
+            margin-bottom: 0px;
+        }
+        .stock-info {
+            width: 100px;
+            height: 200px;
+            font-family: Verdana;
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            text-align: center; 
+        }
+        .stock-info hr {
+            width: 80%;         
+            border: 0;          
+            border-top: 1px solid #ccc; 
+            margin: 0 0;
+        }
+        .industry-info {
+            width: 150px;
+            height: 100%;
+            font-family: Verdana;
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            text-align: center; 
+            border: 1px solid black;
+            margin-top: 10px;
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+        .industry-info hr {
+            width: 80%;         
+            border: 0;          
+            border-top: 1px solid #ccc; 
+            margin: 0;
+        }
+        .industry-info p {
+            margin: 5px;
+        }
+        .sentiment{
+            width: 350px;
+            font-size: 12px;
+            margin: 10px;
+        }
+        .column {
+            flex-direction: column;
+            gap: 1rem;  
+            width: 150px;  
+            margin: 0 auto;
+            background-color: #2a2a2a;
+            color: white;
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            border-radius: 0;
+            bottom: 0;
+        }
+        .box-link {
+            border-collapse: collapse;
+            display: block;
+            padding: 20px;
+            text-align: center;
+            text-decoration: none;
+            border: 3px solid darkgray;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            border-radius: 0;  
+            border-bottom: 0;
+        }
+        .box-link-bottom {
+            border-collapse: collapse;
+            display: block;
+            padding: 20px;
+            text-align: center;
+            text-decoration: none;
+            border: 3px solid darkgray;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            border-radius: 0;  
+        }
+        .box-link:hover {
+            background-color: black;
+        }
+        .box-link-bottom:hover {
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+    <div class="column">
+        {% if logged_in == True %}
+            <a href="/signup_page" class="box-link">Sign Up</a>
+            <a href="/logout" class="box-link-bottom">Logout</a>
+        {% else %}
+            <a href="/login_page" class="box-link">Login</a>
+            <a href="/signup_page" class="box-link-bottom">Sign Up</a>
+        {% endif %}
+        <div style="position: absolute; bottom: 5px; left: 5px;">
+            {% if logged_in == True %}
+                <a>Logged In</a>
+            {% else %}
+                <a>Logged Out</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="main-content">
+        <form onsubmit="submitForm(); return false;">
+            <div class="prompt-container">
+                <h2 class="prompt-title">Enter Ticker</h2>
+                <input type="text" id="investmentID" class="prompt-input">
+            </div>
+        </form>
+        
+        <!-- Empty container holder -->
+        <div id="infoContainersParent"></div>
+    </div>
+    <script>
+        function abbreviateNumber(value) {
+            if (value >= 1e12) return (value / 1e12).toFixed(2) + "T";
+            if (value >= 1e9)  return (value / 1e9).toFixed(2) + "B";
+            if (value >= 1e6)  return (value / 1e6).toFixed(2) + "M";
+            if (value >= 1e3)  return (value / 1e3).toFixed(2) + "K";
+            return value.toString();
+        }
+
+        const loggedIn = {{ 'true' if logged_in else 'false' }};
+        
+        function submitForm() {
+            if (loggedIn) {
+            submitInvestmentIn();
+            } else {
+            submitInvestmentOut();
+            }
+        }
+        
+        function submitInvestmentOut(investment_id = null) {
+            if (!investment_id) {
+                investment_id = document.getElementById("investmentID").value;
+            }
+    
+            fetch('/submit_investment_out', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ investment_id: investment_id })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const parent = document.getElementById("infoContainersParent");
+                
+                const newContainer = document.createElement("div");
+                newContainer.className = "information-container";
+                newContainer.id = `${investment_id}`;
+                newContainer.innerHTML = `
+                    <div class="title-container">
+                        ${investment_id.toUpperCase()}
+                        <button class="delete" onclick="deleteInvestment('${investment_id}')">X</button>
+                    </div>
+                    <div style="display: flex;">
+                        <div class="stock-graph">
+                            ${data.plot_html}
+                        </div>
+                        <div class="stock-info">
+                            <strong><p>Current Price</strong><br> $${data.info.current_price} (${data.info.percent_change?.toFixed(2)}%)</p><hr>
+                            <strong><p>Market Cap</strong><br> $${abbreviateNumber(data.info.market_cap)}</p><hr>
+                            <strong><p>PE Ratio</strong><br> ${data.info.pe_ratio?.toFixed(2)}</p>
+                        </div>
+                        <div class="industry-info">
+                            <strong><p><mark>Comparable ETF</strong><br><mark>${data.info.etf_symbol}</p><hr>
+                            <strong><p>Market Cap</strong><br> $${abbreviateNumber(data.info.etf_market_cap)}</p><hr>
+                            <strong><p>Daily Change</strong><br> ${data.info.etf_change?.toFixed(2)}%</p><hr>
+                            <strong><p>PE Ratio</strong><br> ${data.info.etf_pe?.toFixed(2)}</p>
+                        </div>
+                        <div class="sentiment">
+                            <p>${data.info.sentiment}</p>
+                        </div>
+                    </div>
+                `;
+                    
+                parent.appendChild(newContainer);
+
+                // Find and execute scripts inside container
+                newContainer.querySelectorAll("script").forEach(script => {
+                    const newScript = document.createElement("script");
+                    if (script.src) {
+                        newScript.src = script.src;
+                    } else {
+                        newScript.textContent = script.textContent;
+                    }
+                    document.head.appendChild(newScript);
+                    document.head.removeChild(newScript);
+                });
+            })
+            .catch(console.error);
+        }
+
+        function submitInvestmentIn() {
+            const investment_id = document.getElementById("investmentID").value;
+            fetch('/submit_investment_in', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ investment_id: investment_id })
+            })
+            submitInvestmentOut(investment_id)
+        }
+
+        function deleteInvestment(investment_id) {
+            fetch('/delete_investment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ investment_id: investment_id }) 
+            })
+            .then(response => {
+                const container = document.getElementById(`${investment_id}`);
+                container.remove();
+            })
+            .catch(console.error);
+    }
+    </script>
+    {% if logged_in == True %}
+    <script>
+        // Pass the items list as a JS array of objects
+        const items = {{ items | tojson }};
+        console.log("Items on load for logged in:", items);
+        items.forEach(item => {
+            submitInvestmentOut(item.item_text);
+        });
+    </script>
+    {% endif %}
+  </body>  
+</html>

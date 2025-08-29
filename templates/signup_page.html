@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up Page</title>
+    <style>
+        body {
+            font-family: Verdana, sans-serif;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;  
+            align-items: center;    
+            background-color: #f5f5f5;
+        }
+        .container {
+            border: 5px solid black;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form action="/submit_signup" method="POST">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required><br><br>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required><br><br>
+
+            <button type="submit" style="margin-top: 20px;">Submit</button>
+
+        </form>
+    </div>
+</body>
+</html>
