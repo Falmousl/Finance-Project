@@ -40,10 +40,10 @@ def get_db_connection():
 
 def get_db_connection():
     return mysql.connector.connect(
-        host=DB_HOST,
-        user=DB_USER,
-        password=DB_PASSWORD,  
-        database=DB
+        host=os.environ['DB_HOST'],
+        user=os.environ['DB_USER'],
+        password=os.environ['DB_PASSWORD'],  
+        database=os.environ['DB']
     )
 
 def get_items():
